@@ -41,7 +41,6 @@ def eval_io(seq1, seq2):
     for k,v in seq1.iteritems():
         for e in v:
             call = e['api']
-            print call
 
             if call in api_file:
                 seq1_file.append(e)
@@ -78,9 +77,9 @@ def eval_io(seq1, seq2):
             seq2_file_io.append(key)
 
     # Print result
-    print 'File I/O results: ("before" should have all api calls in "after")'
+    print 'File I/O results: ("after" should have all api calls from "before")'
     print '# of files in "after" which are NOT in "before": {0}'.format(len(seq2_file_io))
-    print '# of files in "before" which are NOT in "after": {0}'.format(len(seq1_file_io))
+    print '# of files in "before" which are NOT in "after" (should be 0): {0}'.format(len(seq1_file_io))
     print ''
 
     seq1_registry_io = list()
@@ -105,9 +104,9 @@ def eval_io(seq1, seq2):
             seq2_registry_io.append(key)
 
     # Print result
-    print 'Registry I/O results: ("before" should have all api calls in "after")'
+    print 'Registry I/O results: ("after" should have all api calls from "before")'
     print '# of files in "after" which are NOT in "before": {0}'.format(len(seq2_registry_io))
-    print '# of files in "before" which are NOT in "after": {0}'.format(len(seq1_registry_io))
+    print '# of files in "before" which are NOT in "after" (should be 0): {0}'.format(len(seq1_registry_io))
     print ''
 
 
@@ -135,9 +134,9 @@ def eval_seq(seq1, seq2):
                 api1.append(call)
 
     # Print result
-    print 'Sequence results: ("before" should have all api calls in "after")'
+    print 'Sequence results: ("after" should have all api calls from "before")'
     print '# of API calls in "after" which are NOT in "before": {0}'.format(len(api2))
-    print '# of API calls in "before" which are NOT in "after": {0}'.format(len(api1))
+    print '# of API calls in "before" which are NOT in "after" (should be 0): {0}'.format(len(api1))
     print ''
 
 # Extracts API calls from raw Cuckoo logs

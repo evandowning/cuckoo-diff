@@ -85,16 +85,14 @@ def eval_io(seq1, seq2):
     seq1_registry_io = list()
     seq2_registry_io = list()
 
-    #TODO - Parse for registry key value arguments
+    #TODO - Parse for registry key value arguments. Is this complete?
     # Compare Registry I/O
     for e in seq1_registry:
-        print e
         io = [k for k,v in e['arguments'].iteritems() if re.match(r'.*FileName.*', k) is not None]
         key = e['api'] + ' ' + str([e['arguments'][k] for k in io])
         seq1_registry_io.append(key)
 
     for e in seq2_registry:
-        print e
         io = [k for k,v in e['arguments'].iteritems() if re.match(r'.*FileName.*', k) is not None]
         key = e['api'] + ' ' + str([e['arguments'][k] for k in io])
 

@@ -1,10 +1,13 @@
+#!/usr/bin/env python2.7
+
 import sys
 import os
 import shutil
 import zipfile
 import re
 
-import dump2file
+sys.path.append('cuckoo-headless')
+import extract_raw.dump2file
 from bson_parser.windows import *
 
 # Determines if File I/O and Registry I/O in seq1 are a proper subset of seq2
@@ -38,7 +41,7 @@ def eval_io(seq1, seq2):
     seq2_registry = list()
 
     # Extract File I/O & Registry I/O from "before" sequence
-    for k,v in seq1.iteritems():
+    for k,v in seq1.items():
         for e in v:
             call = e['api']
 
@@ -48,7 +51,7 @@ def eval_io(seq1, seq2):
                 seq1_registry.append(e)
 
     # Extract File I/O & Registry I/O from "after" sequence
-    for k,v in seq2.iteritems():
+    for k,v in seq2.items():
         for e in v:
             call = e['api']
 
@@ -63,12 +66,12 @@ def eval_io(seq1, seq2):
 
     # Compare File I/O
     for e in seq1_file:
-        io = [k for k,v in e['arguments'].iteritems() if re.match(r'.*FileName.*', k) is not None]
+        io = [k for k,v in e['arguments'].items() if re.match(r'.*FileName.*', k) is not None]
         key = e['api'] + ' ' + str([e['arguments'][k] for k in io])
         seq1_file_io.append(key)
 
     for e in seq2_file:
-        io = [k for k,v in e['arguments'].iteritems() if re.match(r'.*FileName.*', k) is not None]
+        io = [k for k,v in e['arguments'].items() if re.match(r'.*FileName.*', k) is not None]
         key = e['api'] + ' ' + str([e['arguments'][k] for k in io])
 
         if key in seq1_file_io:
@@ -77,10 +80,10 @@ def eval_io(seq1, seq2):
             seq2_file_io.append(key)
 
     # Print result
-    print 'File I/O results: ("after" should have all api calls from "before")'
-    print '# of files in "after" which are NOT in "before": {0}'.format(len(seq2_file_io))
-    print '# of files in "before" which are NOT in "after" (should be 0): {0}'.format(len(seq1_file_io))
-    print ''
+    sys.stdout.write('File I/O results: ("after" should have all api calls from "before")\n')
+    sys.stdout.write('# of files in "after" which are NOT in "before": {0}\n'.format(len(seq2_file_io)))
+    sys.stdout.write('# of files in "before" which are NOT in "after" (should be 0): {0}\n'.format(len(seq1_file_io)))
+    sys.stdout.write('\n')
 
     seq1_registry_io = list()
     seq2_registry_io = list()
@@ -88,12 +91,12 @@ def eval_io(seq1, seq2):
     #TODO - Parse for registry key value arguments. Is this complete?
     # Compare Registry I/O
     for e in seq1_registry:
-        io = [k for k,v in e['arguments'].iteritems() if re.match(r'.*FileName.*', k) is not None]
+        io = [k for k,v in e['arguments'].items() if re.match(r'.*FileName.*', k) is not None]
         key = e['api'] + ' ' + str([e['arguments'][k] for k in io])
         seq1_registry_io.append(key)
 
     for e in seq2_registry:
-        io = [k for k,v in e['arguments'].iteritems() if re.match(r'.*FileName.*', k) is not None]
+        io = [k for k,v in e['arguments'].items() if re.match(r'.*FileName.*', k) is not None]
         key = e['api'] + ' ' + str([e['arguments'][k] for k in io])
 
         if key in seq1_registry_io:
@@ -102,10 +105,10 @@ def eval_io(seq1, seq2):
             seq2_registry_io.append(key)
 
     # Print result
-    print 'Registry I/O results: ("after" should have all api calls from "before")'
-    print '# of files in "after" which are NOT in "before": {0}'.format(len(seq2_registry_io))
-    print '# of files in "before" which are NOT in "after" (should be 0): {0}'.format(len(seq1_registry_io))
-    print ''
+    sys.stdout.write('Registry I/O results: ("after" should have all api calls from "before")\n')
+    sys.stdout.write('# of files in "after" which are NOT in "before": {0}\n'.format(len(seq2_registry_io)))
+    sys.stdout.write('# of files in "before" which are NOT in "after" (should be 0): {0}\n'.format(len(seq1_registry_io)))
+    sys.stdout.write('\n')
 
 
 # Determines if seq1 is a proper subset of seq2
@@ -114,13 +117,13 @@ def eval_seq(seq1, seq2):
     api1 = list()
 
     # Extract API calls from second sequence
-    for k,v in sorted(seq2.iteritems(), key=lambda (k,v): int(k)):
+    for k,v in sorted(iter(seq2.items()), key=lambda k_v: int(k_v[0])):
         for e in v:
             call = e['api']
             api2.append(call)
 
     # Extract API calls from first sequence
-    for k,v in sorted(seq1.iteritems(), key=lambda (k,v): int(k)):
+    for k,v in sorted(iter(seq1.items()), key=lambda k_v1: int(k_v1[0])):
         for e in v:
             call = e['api']
 
@@ -132,10 +135,10 @@ def eval_seq(seq1, seq2):
                 api1.append(call)
 
     # Print result
-    print 'Sequence results: ("after" should have all api calls from "before")'
-    print '# of API calls in "after" which are NOT in "before": {0}'.format(len(api2))
-    print '# of API calls in "before" which are NOT in "after" (should be 0): {0}'.format(len(api1))
-    print ''
+    sys.stdout.write('Sequence results: ("after" should have all api calls from "before")\n')
+    sys.stdout.write('# of API calls in "after" which are NOT in "before": {0}\n'.format(len(api2)))
+    sys.stdout.write('# of API calls in "before" which are NOT in "after" (should be 0): {0}\n'.format(len(api1)))
+    sys.stdout.write('\n')
 
 # Extracts API calls from raw Cuckoo logs
 def extract(dump_fn):
@@ -204,7 +207,7 @@ def extract(dump_fn):
     return timeline
 
 def usage():
-    print 'usage: python diff.py sysdump_before sysdump_after'
+    sys.stdout.write('usage: python diff.py sysdump_before sysdump_after\n')
     sys.exit(2)
 
 def _main():

@@ -7,7 +7,7 @@ import zipfile
 import re
 
 sys.path.append('cuckoo-headless')
-import extract_raw.dump2file
+import extract_raw.dump2file as dump2file
 from bson_parser.windows import *
 
 # Determines if File I/O and Registry I/O in seq1 are a proper subset of seq2
@@ -140,18 +140,9 @@ def eval_seq(seq1, seq2):
     sys.stdout.write('# of API calls in "before" which are NOT in "after" (should be 0): {0}\n'.format(len(api1)))
     sys.stdout.write('\n')
 
-# Extracts API calls from raw Cuckoo logs
-def extract(dump_fn):
-    # Dump file contents
-    dump2file.dump(dump_fn)
-
-    # Uncompress zip file
-    with zipfile.ZipFile('stuff.zip','r') as zip_ref:
-        zip_ref.extractall('stuff')
-
+# Extracts API call sequences from Cuckoo BSON data
+def extract_timeline(bsonDir):
     timeline = dict()
-
-    bsonDir = os.path.join('stuff','logs')
 
     # Get each bson file
     for fn in os.listdir(bsonDir):
@@ -191,6 +182,8 @@ def extract(dump_fn):
         # Extract data
         for e in rv:
             if 'api' in e:
+                api = e['api']
+                pc = e['eip']
                 ts = str(e['time'])
 
                 if ts not in timeline:
@@ -200,9 +193,40 @@ def extract(dump_fn):
         # Remove temporary BSON file
         os.remove(tmpfn)
 
+    return timeline
+
+# Extracts API calls from raw Cuckoo logs
+def extract(dump_fn):
+    # Get folder
+    out_base = os.path.join('/tmp','cuckoo-headless-dump',dump_fn)
+    if not os.path.exists(out_base):
+        os.makedirs(out_base)
+
+    # Dump file contents
+    dump2file.dump(dump_fn,out_base)
+
+    # Uncompress zip file
+    # From: https://stackoverflow.com/questions/3451111/unzipping-files-in-python
+    zippath = os.path.join(out_base,'stuff.zip')
+    with zipfile.ZipFile(zippath,'r') as zip_ref:
+        zip_ref.extractall(out_base)
+
+    # Parse bson files and extract data
+    timeline = extract_timeline(os.path.join(out_base,'logs'))
+
     # Clean up files
-    shutil.rmtree('stuff')
-    os.remove('stuff.zip')
+    for fn in os.listdir(out_base):
+        path = os.path.join(out_base,fn)
+
+        # If directory
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+        # If file
+        else:
+            os.remove(path)
+
+    # Remove base tmp directory
+    shutil.rmtree(out_base)
 
     return timeline
 
